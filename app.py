@@ -15,31 +15,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Define Light Theme Colors
-BACKGROUND_COLOR = "#f0f4f8"
-TEXT_COLOR = "#333333"
-BUTTON_COLOR = "#4CAF50"
-BUTTON_HOVER_COLOR = "#45a049"
-CHURN_HIGH_COLOR = "#f44336"
-CHURN_LOW_COLOR = "#4CAF50"
-FORM_BACKGROUND_COLOR = "#ffffff"
-FORM_TEXT_COLOR = "#333333"
-
-# Inject CSS for Light Theme UI
-st.markdown(f"""
-    <style>
-        .stApp {{ background-color: {BACKGROUND_COLOR}; color: {TEXT_COLOR}; }}
-        .main {{ background-color: {FORM_BACKGROUND_COLOR}; padding: 20px; border-radius: 10px;
-                 box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); }}
-        .stButton>button {{ background-color: {BUTTON_COLOR}; color: white; border-radius: 5px;
-                            padding: 12px 24px; font-size: 18px; transition: 0.3s; }}
-        .stButton>button:hover {{ background-color: {BUTTON_HOVER_COLOR}; }}
-        .churn-high {{ color: {CHURN_HIGH_COLOR}; font-size: 28px; font-weight: bold; }}
-        .churn-low {{ color: {CHURN_LOW_COLOR}; font-size: 28px; font-weight: bold; }}
-    </style>
-""", unsafe_allow_html=True)
-
-
 # ----------------------------------------
 # 🚀 Load the Model and Scaler using joblib
 # ----------------------------------------
