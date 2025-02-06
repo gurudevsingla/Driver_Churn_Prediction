@@ -1,152 +1,138 @@
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
+import warnings
+warnings.simplefilter("ignore")
 
-# Force the app to use light theme
-st.set_page_config(page_title="Driver Churn Prediction", page_icon="🚗", layout="centered",
-                   initial_sidebar_state="expanded")
+# ----------------------------------------
+# 💡  App Configuration & Theme Settings
+# ----------------------------------------
+st.set_page_config(
+    page_title="Driver Churn Prediction",
+    page_icon="🚗",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
-# Load the scaler and model
-scaler = joblib.load('models/scaler.pkl')  # Correct the path if needed
-rf_model = joblib.load('models/rf_model.pkl')  # Correct the path if needed
+# Define Light Theme Colors
+BACKGROUND_COLOR = "#f0f4f8"
+TEXT_COLOR = "#333333"
+BUTTON_COLOR = "#4CAF50"
+BUTTON_HOVER_COLOR = "#45a049"
+CHURN_HIGH_COLOR = "#f44336"
+CHURN_LOW_COLOR = "#4CAF50"
+FORM_BACKGROUND_COLOR = "#ffffff"
+FORM_TEXT_COLOR = "#333333"
 
-# Light Theme Styling
-background_color = "#f0f4f8"  # Light background
-text_color = "#333333"  # Dark text for readability
-button_color = "#4CAF50"
-button_hover_color = "#45a049"
-churn_high_color = "#f44336"
-churn_low_color = "#4CAF50"
-form_background_color = "#ffffff"  # White form background
-form_text_color = "#333333"  # Dark text inside form
-
-# Apply CSS for light theme
+# Inject CSS for Light Theme UI
 st.markdown(f"""
     <style>
-        .stApp {{
-            background-color: {background_color};
-            color: {text_color};
-        }}
-        .main {{
-            background-color: {form_background_color};
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }}
-        .stButton>button {{
-            background-color: {button_color};
-            color: {text_color};
-            border-radius: 5px;
-            padding: 12px 24px;
-            font-size: 18px;
-            transition: background-color 0.3s;
-        }}
-        .stButton>button:hover {{
-            background-color: {button_hover_color};
-        }}
-        .stSelectbox, .stNumberInput {{
-            font-size: 16px;
-            padding: 10px;
-            background-color: {form_background_color};
-            border-radius: 5px;
-        }}
-        .churn-high {{
-            color: {churn_high_color}; /* Red for high churn risk */
-            font-size: 28px;
-            font-weight: bold;
-        }}
-        .churn-low {{
-            color: {churn_low_color}; /* Green for low churn risk */
-            font-size: 28px;
-            font-weight: bold;
-        }}
-        .stTitle {{
-            color: {text_color};
-        }}
-        .stMarkdown {{
-            font-size: 18px;
-            color: {form_text_color};
-        }}
-        .stForm {{
-            background-color: {form_background_color};
-            color: {form_text_color};
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
-        }}
-        .stSelectbox div {{
-            color: {form_text_color};
-        }}
+        .stApp {{ background-color: {BACKGROUND_COLOR}; color: {TEXT_COLOR}; }}
+        .main {{ background-color: {FORM_BACKGROUND_COLOR}; padding: 20px; border-radius: 10px;
+                 box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); }}
+        .stButton>button {{ background-color: {BUTTON_COLOR}; color: white; border-radius: 5px;
+                            padding: 12px 24px; font-size: 18px; transition: 0.3s; }}
+        .stButton>button:hover {{ background-color: {BUTTON_HOVER_COLOR}; }}
+        .churn-high {{ color: {CHURN_HIGH_COLOR}; font-size: 28px; font-weight: bold; }}
+        .churn-low {{ color: {CHURN_LOW_COLOR}; font-size: 28px; font-weight: bold; }}
     </style>
 """, unsafe_allow_html=True)
 
-# UI for input fields
-st.title("🚗 Driver Churn Prediction")
-st.markdown("Please fill out the details below to predict the churn probability for a driver.")
 
-# Create an interactive form for the user input
+# ----------------------------------------
+# 🚀 Load the Model and Scaler using joblib
+# ----------------------------------------
+@st.cache_resource
+def load_models():
+    scaler = joblib.load('models/scaler.pkl')
+    rf_model = joblib.load('models/rf_model.pkl')
+    return scaler, rf_model
+
+
+scaler, rf_model = load_models()
+
+# ----------------------------------------
+# 🏆 App Title & Description
+# ----------------------------------------
+st.title("🚗 Driver Churn Prediction")
+st.markdown("### Predict whether a driver is at risk of **churning** based on their profile.")
+st.markdown("---")
+
+# ----------------------------------------
+# 📝 User Input Form
+# ----------------------------------------
 with st.form("driver_form", clear_on_submit=False):
-    # Collecting inputs with better UI
     col1, col2 = st.columns(2)
+
     with col1:
-        age = st.number_input("Age (in years)", min_value=18, max_value=100, step=1,
-                              help="Enter the age of the driver.")
-        income = st.number_input("Income (in rupees)", min_value=1000, max_value=1000000, step=1000,
-                                 help="Enter the income of the driver in rupees.")
-        total_business_value = st.number_input("Total Business Value (in rupees)", min_value=1000, max_value=1000000,
-                                               step=1000, help="Enter the total business value in rupees.")
-        joining_designation = st.selectbox("Joining Designation", [1, 2, 3, 4, 5],
-                                           help="Select the joining designation of the driver.")
-        last_quarterly_rating = st.selectbox("Last Quarterly Rating", [1, 2, 3, 4, 5],
-                                             help="Select the last quarterly rating of the driver.")
+        age = st.number_input("🧑 Age (years)", min_value=18, max_value=100, step=1, help="Driver's age")
+        income = st.number_input("💰 Income (₹)", min_value=1000, max_value=1000000, step=1000,
+                                 help="Driver's monthly income")
+        total_business_value = st.number_input("📊 Total Business Value (₹)", min_value=1000, max_value=1000000,
+                                               step=1000, help="Total revenue generated by the driver")
+        joining_designation = st.selectbox("📌 Joining Designation", [1, 2, 3, 4, 5], help="Initial role when joining")
+        last_quarterly_rating = st.selectbox("⭐ Last Quarterly Rating", [1, 2, 3, 4, 5],
+                                             help="Performance rating in last quarter")
 
     with col2:
-        gender = st.selectbox("Gender", ["Male", "Female"], help="Select the gender of the driver.")
-        education = st.selectbox("Education Level", ["10+", "12+", "Graduate"],
-                                 help="Select the education level of the driver.")
-        grade = st.selectbox("Grade", [1, 2, 3, 4, 5], help="Select the grade of the driver.")
-        quarterly_rating_increased = st.selectbox("Quarterly Rating Increased", ["Yes", "No"],
-                                                  help="Did the quarterly rating increase?")
-        salary_increased = st.selectbox("Salary Increased", ["Yes", "No"], help="Did the driver's salary increase?")
+        gender = st.selectbox("⚧ Gender", ["Male", "Female"], help="Select driver's gender")
+        education = st.selectbox("🎓 Education Level", ["10+", "12+", "Graduate"],
+                                 help="Highest education level attained")
+        grade = st.selectbox("🏆 Grade", [1, 2, 3, 4, 5], help="Current driver grade")
+        quarterly_rating_increased = st.selectbox("📈 Quarterly Rating Increased?", ["Yes", "No"],
+                                                  help="Did rating improve last quarter?")
+        salary_increased = st.selectbox("📉 Salary Increased?", ["Yes", "No"], help="Did salary increase recently?")
 
-    # Submit button
-    submit_button = st.form_submit_button("Predict Churn Probability")
+    # Submit Button
+    submit_button = st.form_submit_button("🔮 Predict Churn Probability")
 
-# Preprocessing the inputs when the button is clicked
+# ----------------------------------------
+# 🔍 Process Inputs & Make Predictions
+# ----------------------------------------
 if submit_button:
-    # Map user input to the required format
+    # Convert categorical inputs
     gender = 0 if gender == "Male" else 1
     education_mapping = {"10+": 0, "12+": 1, "Graduate": 2}
     education = education_mapping[education]
     quarterly_rating_increased = 1 if quarterly_rating_increased == "Yes" else 0
     salary_increased = 1 if salary_increased == "Yes" else 0
 
-    # Create a numpy array with the user input data
-    user_input = np.array([[
-        age,
-        gender,
-        education,
-        income,
-        joining_designation,
-        grade,
-        total_business_value,
-        last_quarterly_rating,
-        quarterly_rating_increased,
-        salary_increased
-    ]])
+    # Prepare input array
+    user_input = np.array([[age, gender, education, income, joining_designation, grade,
+                            total_business_value, last_quarterly_rating, quarterly_rating_increased, salary_increased]])
 
-    # Transform the input data using the loaded scaler
-    user_input_scaled = scaler.transform(user_input)
+    # Define feature names (MUST match the names used during training)
+    # Define feature names in the exact order as used during training
+    feature_columns = [
+        "Age", "Gender", "Education", "Income", "Joining_Designation",
+        "Grade", "Total_Business_Value", "Last_Quarterly_Rating",
+        "Quarterly_Rating_Increased", "Salary_Increased"
+    ]
+
+    # Convert user input into a DataFrame (ensuring correct feature names)
+    user_input_df = pd.DataFrame(user_input, columns=feature_columns)
+
+    # Ensure all columns match the training data exactly
+    user_input_df = user_input_df[feature_columns]  # Ensures correct column order
+
+    # Scale the input
+    user_input_scaled = scaler.transform(user_input_df)
 
     # Predict churn probability
-    churn_prob = rf_model.predict_proba(user_input_scaled)[:, 1]  # Assuming class 1 is churn
+    churn_prob = rf_model.predict_proba(user_input_scaled)[:, 1][0]
 
-    # Display the result in an attractive way
-    st.markdown("### Churn Probability")
-    st.write(f"🟢 **Churn Probability**: {churn_prob[0]:.4f}")
+    # ----------------------------------------
+    # 🎯 Display Results
+    # ----------------------------------------
+    st.markdown("---")
+    st.markdown("### 🔮 **Churn Probability**")
 
-    # Add a visual indicator based on churn probability
-    if churn_prob[0] > 0.5:
-        st.markdown('<div class="churn-high">⚠️ High Churn Risk!</div>', unsafe_allow_html=True)
+    if churn_prob > 0.5:
+        st.markdown(f'<div class="churn-high">⚠️ High Churn Risk! ({churn_prob:.2%})</div>', unsafe_allow_html=True)
+        st.warning(f"The driver has a **{churn_prob:.2%} probability** of churning. Consider retention strategies.")
     else:
-        st.markdown('<div class="churn-low">✔️ Low Churn Risk!</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="churn-low">✔️ Low Churn Risk ({churn_prob:.2%})</div>', unsafe_allow_html=True)
+        st.success(f"The driver has a **{churn_prob:.2%} probability** of staying. No major risk detected.")
+
+    st.markdown("---")
