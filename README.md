@@ -25,6 +25,21 @@ Dataset Link - https://d2beiqkhq929f0.cloudfront.net/public_assets/assets/000/00
   - Used Logistic Regression, Random Forest, Gradient Boosted Decision Trees
   - Best F1-Score and Area Under Curve recieved using Random Forest i.e. 0.87 and 0.75
 
+# Actionable Insights and Recommendation
+
+- Out of 2381 drivers 1616 have left the company.
+- We need to incentivise the drivers overtime or other perks to overcome churning
+- The employees whose quarterly rating has increased are less likely to leave the organization.
+- Company needs to implement the reward system for the customer who provide the feedback and rate drivers
+- The employees whose monthly salary has not increased are more likely to leave the organization.
+- Company needs to get in touch with those drivers whose monthly salary has not increased and help them out to earn more by provider bonus and perks.
+- Out of 2381 employees, 1744 employees had their last quarterly rating as 1.
+- Out of 2381 employees, the quarterly rating has not increased for 2023 employees. This is red flag for the company which needs to regulate.
+- Company needs to look why customers are not rating drivers.
+- Last_Quarterly_Rating, Total_Business_Value & Quarterly_Rating_Increased are the most important features. Company needs to tracks these features as predicators
+- We observe that we are not getting very high recall on target 0 which may be due to small imbalanced dataset. More data will overcome this issue.
+- The Random Forest Classifier attains the Recall score of 92% for the driver who left the company. Which indicates that model is performing the decent job.
+
 # Deployed on Streamlit
 
 Link - https://driver-churn-prediction.streamlit.app/
